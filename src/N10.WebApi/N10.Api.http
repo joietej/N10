@@ -1,0 +1,9 @@
+@N10.WebApi_HostAddress = http://localhost:5295
+
+GET {{N10.WebApi_HostAddress}}/api/books
+Accept: application/json
+
+###
+
+GET {{N10.WebApi_HostAddress}}/healthz
+Accept: application/json
