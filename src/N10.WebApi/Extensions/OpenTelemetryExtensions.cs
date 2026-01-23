@@ -17,7 +17,11 @@ public static class OpenTelemetryExtensions
 
         var otel = builder.Services.AddOpenTelemetry();
 
-        otel.WithMetrics(metrics => { metrics.AddAspNetCoreInstrumentation(); });
+        otel.WithMetrics(metrics =>
+        {
+            metrics.AddAspNetCoreInstrumentation();
+            metrics.AddRuntimeInstrumentation();
+        });
 
         otel.WithTracing(trace =>
         {

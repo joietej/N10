@@ -1,7 +1,9 @@
+using System.Threading.RateLimiting;
 using Azure.Identity;
-using HotChocolate.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpLogging;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 using N10.WebApi.Apis;
@@ -23,12 +25,53 @@ builder.Services.AddProblemDetails();
 // Add services to the container.
 builder.AddConfig();
 
-builder.Services.AddHealthChecks();
+// Add HybridCache (L1 in-memory + L2 distributed)
+builder.Services.AddHybridCache(options =>
+{
+    options.DefaultEntryOptions = new Microsoft.Extensions.Caching.Hybrid.HybridCacheEntryOptions
+    {
+        Expiration = TimeSpan.FromMinutes(5),
+        LocalCacheExpiration = TimeSpan.FromMinutes(2)
+    };
+});
+
+// Add Health Checks with SQL Server readiness check
+var sqlConnectionString = builder.Configuration.GetConnectionString("Sql");
+var healthChecksBuilder = builder.Services.AddHealthChecks();
+if (sqlConnectionString != null)
+{
+    healthChecksBuilder.AddSqlServer(sqlConnectionString, name: "database", tags: ["ready"]);
+}
 
 // Add Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
 builder.Services.AddAuthorization();
+
+// Add Rate Limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("per-user", opt =>
+    {
+        opt.PermitLimit = 100;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueLimit = 0;
+    });
+    options.AddFixedWindowLimiter("global", opt =>
+    {
+        opt.PermitLimit = 1000;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueLimit = 0;
+    });
+});
+
+// Add Output Caching
+builder.Services.AddOutputCache(options =>
+{
+    options.AddBasePolicy(policy => policy.NoCache());
+    options.AddPolicy("books", policy => policy.Expire(TimeSpan.FromMinutes(5)).SetVaryByQuery("*"));
+});
 
 // Add Polly
 builder.Services.AddResiliencePipeline("default",
@@ -77,7 +120,7 @@ app.UseExceptionHandling();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference(options => { options.WithEndpointPrefix("/api-docs/{documentName}"); });
+    app.MapScalarApiReference("/api-docs", options => { });
 }
 
 app.UseHttpLogging();
@@ -85,11 +128,20 @@ app.UseHttpsRedirection();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
+app.UseOutputCache();
 
-app.MapGraphQLHttp().RequireAuthorization();
-app.MapNitroApp("/graphql/ui");
+app.MapGraphQL().RequireAuthorization();
 
-app.MapHealthChecks("/healthz");
+// Health check endpoints: liveness and readiness
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = _ => false
+});
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready")
+});
 
 // Map routes
 app.MapBooksApi();
