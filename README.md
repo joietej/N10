@@ -49,18 +49,11 @@ This project demonstrates a structured approach to building a web API using .NET
 
 ### Setup Instructions
 
-1. **Clone the repository**:
-
-   ```bash
-   git clone https://github.com/joietej/N10.git
-   cd N10
-   ```
-
-2. **Configure the database connection string**:
+1. **Configure the database connection string**:
 
    Update the `ConnectionStrings:Sql` in `appsettings.Development.json` with your SQL Server details.
 
-3. **Run the application**:
+2. **Run the application**:
 
    ```bash
    dotnet run --project src/N10.WebApi
@@ -68,11 +61,11 @@ This project demonstrates a structured approach to building a web API using .NET
 
    The application will automatically apply migrations and seed the database on startup.
 
-4. **Access the API documentation**:
+3. **Access the API documentation**:
 
     Navigate to `http://localhost:5295/api-docs/v1` in your browser.
 
-5. **Access the GraphQL UI**:
+4. **Access the GraphQL UI**:
 
     Navigate to `http://localhost:5295/graphql/ui` in your browser.
 
@@ -81,8 +74,8 @@ This project demonstrates a structured approach to building a web API using .NET
 To run the API as a Docker container:
 
 ```bash
-docker build -t n10-api -f src/N10.WebApi/Dockerfile src/
-docker run -d -p 5295:8080 --name n10-api n10-api
+docker build -t N10-api -f src/N10.WebApi/Dockerfile src/
+docker run -d -p 5295:8080 --name N10-api N10-api
 ```
 
 ## Configuration

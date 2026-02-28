@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Tejas Sahasrabudhe",
+  "classifications": ["Web", "API", "Minimal API", ".NET 10", "Clean Architecture"],
+  "identity": "N10.WebApi.Template",
+  "name": ".NET 10 Minimal API (Well-Architected)",
+  "shortName": "n10api",
+  "description": "A well-architected .NET 10 Minimal API solution with EF Core, GraphQL, OpenTelemetry, Polly, HybridCache, and Azure AD authentication.",
+  "tags": {
+    "language": "C#",
+    "type": "solution"
+  },
+  "sourceName": "N10",
+  "preferNameDirectory": true,
+  "symbols": {
+    "userSecretsId": {
+      "type": "generated",
+      "generator": "guid",
+      "replaces": "aspnet-N10.Api-e283ade6-b53b-4ded-b64c-1672b9a27516",
+      "parameters": {
+        "format": "D"
+      }
+    }
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "exclude": [
+            ".git/**",
+            ".claude/**",
+            ".template.config/**",
+            "**/bin/**",
+            "**/obj/**",
+            "nul",
+            "docs/**"
+          ]
+        }
+      ]
+    }
+  ]
+}
