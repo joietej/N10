@@ -6,18 +6,16 @@ namespace N10.WebApi.Services;
 
 public class BooksApiService(IBooksService booksService, ILogger<BooksApiService> logger) : IBooksApiService
 {
-    public async Task<Results<Ok<IEnumerable<BookModel>>, InternalServerError>> GetBooksAsync()
+    public async Task<Results<Ok<List<BookModel>>, InternalServerError>> GetBooksAsync()
     {
-        try
-        {
-            var books = await booksService.GetBooksAsync();
-            return TypedResults.Ok(books);
-        }
-        catch (Exception e)
-        {
-            logger.LogError(e, e.Message);
-        }
+        var result = await booksService.GetBooksAsync();
 
-        return TypedResults.InternalServerError();
+        return result.Match<Results<Ok<List<BookModel>>, InternalServerError>>(
+            onSuccess: books => TypedResults.Ok(books),
+            onFailure: errors =>
+            {
+                logger.LogError("Failed to get books: {Errors}", string.Join("; ", errors));
+                return TypedResults.InternalServerError();
+            });
     }
 }

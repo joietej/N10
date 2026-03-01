@@ -5,5 +5,5 @@ namespace N10.WebApi.Services;
 
 public interface IBooksApiService
 {
-    Task<Results<Ok<IEnumerable<BookModel>>, InternalServerError>> GetBooksAsync();
+    Task<Results<Ok<List<BookModel>>, InternalServerError>> GetBooksAsync();
 }
